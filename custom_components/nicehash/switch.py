@@ -122,11 +122,21 @@ class NiceHashRigSwitch(CoordinatorEntity, ToggleEntity):
                 rig = rig_entry
         return rig
 
+    def get_rig_name(self):
+        rig = self.get_rig()
+        if rig.get("name") is not None and rig.get("name") != '':
+            return rig.get("name")
+        elif rig.get("hasV4Rigs") and rig.get("v4") is not None:
+            return rig.get("v4").get("mmv").get("workerName")
+        else:
+            return rig.get("rigId")
+
     @property
     def name(self):
         rig = self.get_rig()
+        rigName = self.get_rig_name()
         if rig is not None:
-            name = f"NH - {rig.get('name')} - Power"
+            name = f"NH - {rigName} Power"
             return name
         return None
 
@@ -139,10 +149,12 @@ class NiceHashRigSwitch(CoordinatorEntity, ToggleEntity):
     def device_info(self):
         """Information about this entity/device."""
         rig = self.get_rig()
+
         return {
             "identifiers": {(DOMAIN, self._rig_id)},
             # If desired, the name for the device could be different to the entity
-            "name": rig.get("name"),
+            #"default_name": self.get_rig_name(),
+            "name": f"NH - {self.get_rig_name()}",
             "sw_version": rig.get("softwareVersions"),
             "model": rig.get("softwareVersions"),
             "manufacturer": "NiceHash",
@@ -224,12 +236,22 @@ class NiceHashDeviceSwitch(CoordinatorEntity, ToggleEntity):
                     if device_entry.get("id") == self._device_id:
                         return device_entry
 
+    def get_rig_name(self):
+        rig = self.get_rig()
+        if rig.get("name") is not None and rig.get("name") != '':
+            return rig.get("name")
+        elif rig.get("hasV4Rigs") and rig.get("v4") is not None:
+            return rig.get("v4").get("mmv").get("workerName")
+        else:
+            return rig.get("rigId")
+
     @property
     def name(self):
         rig = self.get_rig()
+        rigName = self.get_rig_name()
         device = self.get_device()
         if rig is not None and device is not None:
-            name = f"NH - {rig.get('name')} - {device.get('name')} - Power"
+            name = f"NH - {rigName} {device.get('name')} Power"
             return name
         return None
 
@@ -246,9 +268,14 @@ class NiceHashDeviceSwitch(CoordinatorEntity, ToggleEntity):
         return {
             "identifiers": {(DOMAIN, self._rig_id)},
             # If desired, the name for the device could be different to the entity
-            "rig_name": rig.get("name"),
-            "device_name": device.get("name"),
+            # "rig_name": rig.get("name") or self._rig_id,
+            #"default_name": self.get_rig_name(),
+            "name": f"NH - {self.get_rig_name()}",
+            #"device_name": device.get("name"),
             "manufacturer": "NiceHash",
+            
+            "sw_version": rig.get("softwareVersions"),
+            "model": rig.get("softwareVersions"),
         }
 
     @property
@@ -264,13 +291,38 @@ class NiceHashDeviceSwitch(CoordinatorEntity, ToggleEntity):
             opa = data.get("OPA", {})
             power_mode = dict(map(reversed, opa.items())).get(power_mode_raw, "UNKNOWN")
             supported_power_modes = list(opa.keys())
+        elif "dsv" in device:
+            # v4 miner
+            return {
+                "rig_name": self.get_rig_name(),
+                "device_name": devices.get("dsv").get("name"),
+                "device_id": devices.get("dsv").get("id"),
+                
+                # odv["Temperature"].value
+                #"temperature": self.normalize_value(device.get("temperature")),
+                
+                # odv["Load"].value
+                #"load": self.normalize_value(device.get("load")),
+
+                # odv["Fan speed,RPM"].value
+                #"fan_speed": device.get("revolutionsPerMinute"),
+
+                # odv["Fan speed,%"].value
+                #"fan_speed_percentage": device.get("revolutionsPerMinutePercentage"),
+                
+                # odv["Power usage"].value
+                #"power_usage": device.get("powerUsage"),
+
+                #"power_mode": power_mode,
+                #"supported_power_modes": ", ".join(supported_power_modes),
+            }
         else:
             # Regular NiceHash miner
             power_mode = device.get("powerMode", {}).get("enumName", "UNKNOWN")
             supported_power_modes = ["HIGH", "MEDIUM", "LOW"]
 
         return {
-            "rig_name": rig.get("name"),
+            "rig_name": self.get_rig_name(),
             "device_name": device.get("name"),
             "temperature": self.normalize_value(device.get("temperature")),
             "load": self.normalize_value(device.get("load")),

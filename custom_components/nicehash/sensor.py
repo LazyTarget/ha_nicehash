@@ -154,7 +154,7 @@ class NiceHashGlobalSensor(CoordinatorEntity, Entity):
 
     @property
     def name(self):
-        name = f"NH - {self._config_name} - {self._info_type}"
+        name = f"NH - {self._config_name} Account {self._info_type}"
         if self._convert:
             return f"{name} - {self._fiat}"
         return name
@@ -191,10 +191,11 @@ class NiceHashGlobalSensor(CoordinatorEntity, Entity):
                     f"{self._config_entry.entry_id}_{self._config_name}",
                 )
             },
-            "name": f"{self._config_name} Account",
+            "name": f"NH - {self._config_name} Account",
             "sw_version": "",
             "model": "",
             "manufacturer": "NiceHash",
+            "model": "NiceHash Account",
         }
 
 
@@ -242,7 +243,9 @@ class NiceHashSensor(CoordinatorEntity, Entity):
         return {
             "identifiers": {(DOMAIN, self._rig_id)},
             # If desired, the name for the device could be different to the entity
-            "name": rig.get("name"),
+            #"default_name": self.get_rig_name(),
+            "name": f"NH - {self.get_rig_name()}",
+            #"name": rig.get("name") or rig.get("rigId"),
             "sw_version": rig.get("softwareVersions"),
             "model": rig.get("softwareVersions"),
             "manufacturer": "NiceHash",
@@ -259,11 +262,21 @@ class NiceHashRigSensor(NiceHashSensor):
             return f"{unique_id}-{self._fiat}"
         return unique_id
 
+    def get_rig_name(self):
+        rig = self.get_rig()
+        if rig.get("name") is not None and rig.get("name") != '':
+            return rig.get("name")
+        elif rig.get("hasV4Rigs") and rig.get("v4") is not None:
+            return rig.get("v4").get("mmv").get("workerName")
+        else:
+            return rig.get("rigId")
+
     @property
     def name(self):
         rig = self.get_rig()
+        rigName = self.get_rig_name()
         if rig is not None:
-            name = f"NH - {rig.get('name')} - {self._info_type}"
+            name = f"NH - {rigName} {self._info_type}"
             if self._convert:
                 return f"{name} - {self._fiat}"
             return name
@@ -294,11 +307,21 @@ class NiceHashRigStatSensor(NiceHashSensor):
             return f"{unique_id}-{self._fiat}"
         return unique_id
 
+    def get_rig_name(self):
+        rig = self.get_rig()
+        if rig.get("name") is not None and rig.get("name") != '':
+            return rig.get("name")
+        elif rig.get("hasV4Rigs") and rig.get("v4") is not None:
+            return rig.get("v4").get("mmv").get("workerName")
+        else:
+            return rig.get("rigId")
+
     @property
     def name(self):
         rig = self.get_rig()
+        rigName = self.get_rig_name()
         if rig is not None:
-            name = f"NH - {rig.get('name')} - {self._alg} - {self._info_type}"
+            name = f"NH - {rigName} {self._alg} - {self._info_type}"
             if self._convert:
                 return f"{name} - {self._fiat}"
             return name
@@ -361,7 +384,7 @@ class NiceHashAccountGlobalSensor(NiceHashGlobalSensor):
 
     @property
     def name(self):
-        name = f"NH - {self._config_entry.data['name']} - {self._info_type}"
+        name = f"NH - {self._config_entry.data['name']} {self._info_type}"
         if self._convert:
             return f"{name} - {self._fiat}"
         return name
