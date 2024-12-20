@@ -149,14 +149,18 @@ class NiceHashRigSwitch(CoordinatorEntity, ToggleEntity):
     def device_info(self):
         """Information about this entity/device."""
         rig = self.get_rig()
-
+        sw_version = ''
+        if rig.get("v4") is not None:
+            sw_version = ' '.join(rig.get("v4").get("versions"))
+        else:
+            sw_version = rig.get("softwareVersions")
         return {
             "identifiers": {(DOMAIN, self._rig_id)},
             # If desired, the name for the device could be different to the entity
             #"default_name": self.get_rig_name(),
             "name": f"NH - {self.get_rig_name()}",
-            "sw_version": rig.get("softwareVersions"),
-            "model": rig.get("softwareVersions"),
+            "sw_version": sw_version,
+            "model": "NiceHash Rig",
             "manufacturer": "NiceHash",
         }
 
@@ -265,6 +269,11 @@ class NiceHashDeviceSwitch(CoordinatorEntity, ToggleEntity):
         """Information about this entity/device."""
         rig = self.get_rig()
         device = self.get_device()
+        sw_version = ''
+        if rig.get("v4") is not None:
+            sw_version = ' '.join(rig.get("v4").get("versions"))
+        else:
+            sw_version = rig.get("softwareVersions")
         return {
             "identifiers": {(DOMAIN, self._rig_id)},
             # If desired, the name for the device could be different to the entity
@@ -272,10 +281,9 @@ class NiceHashDeviceSwitch(CoordinatorEntity, ToggleEntity):
             #"default_name": self.get_rig_name(),
             "name": f"NH - {self.get_rig_name()}",
             #"device_name": device.get("name"),
+            "sw_version": sw_version,
+            "model": "NiceHash Rig",
             "manufacturer": "NiceHash",
-            
-            "sw_version": rig.get("softwareVersions"),
-            "model": rig.get("softwareVersions"),
         }
 
     @property
@@ -293,10 +301,11 @@ class NiceHashDeviceSwitch(CoordinatorEntity, ToggleEntity):
             supported_power_modes = list(opa.keys())
         elif "dsv" in device:
             # v4 miner
+            dsv = device.get("dsv")
             return {
                 "rig_name": self.get_rig_name(),
-                "device_name": devices.get("dsv").get("name"),
-                "device_id": devices.get("dsv").get("id"),
+                "device_name": dsv.get("name"),
+                "device_id": dsv.get("id"),
                 
                 # odv["Temperature"].value
                 #"temperature": self.normalize_value(device.get("temperature")),

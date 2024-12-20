@@ -193,7 +193,6 @@ class NiceHashGlobalSensor(CoordinatorEntity, Entity):
             },
             "name": f"NH - {self._config_name} Account",
             "sw_version": "",
-            "model": "",
             "manufacturer": "NiceHash",
             "model": "NiceHash Account",
         }
@@ -240,14 +239,19 @@ class NiceHashSensor(CoordinatorEntity, Entity):
     def device_info(self):
         """Information about this entity/device."""
         rig = self.get_rig()
+        sw_version = ''
+        if rig.get("v4") is not None:
+            sw_version = ' '.join(rig.get("v4").get("versions"))
+        else:
+            sw_version = rig.get("softwareVersions")
         return {
             "identifiers": {(DOMAIN, self._rig_id)},
             # If desired, the name for the device could be different to the entity
             #"default_name": self.get_rig_name(),
             "name": f"NH - {self.get_rig_name()}",
             #"name": rig.get("name") or rig.get("rigId"),
-            "sw_version": rig.get("softwareVersions"),
-            "model": rig.get("softwareVersions"),
+            "sw_version": sw_version,
+            "model": "NiceHash Rig",
             "manufacturer": "NiceHash",
         }
 
@@ -384,7 +388,7 @@ class NiceHashAccountGlobalSensor(NiceHashGlobalSensor):
 
     @property
     def name(self):
-        name = f"NH - {self._config_entry.data['name']} {self._info_type}"
+        name = f"NH - {self._config_entry.data['name']} Account {self._info_type}"
         if self._convert:
             return f"{name} - {self._fiat}"
         return name
